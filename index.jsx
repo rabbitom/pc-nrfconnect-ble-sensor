@@ -38,6 +38,7 @@ import React, { useEffect } from 'react';
 import { App, getUserDataDir } from 'pc-nrfconnect-shared';
 
 import SidePanel from './lib/components/SidePanel';
+import BLESensors from './lib/containers/BLESensors';
 import DeviceDetails from './lib/containers/DeviceDetails';
 import DeviceSelector from './lib/containers/DeviceSelector';
 import ServerSetup from './lib/containers/ServerSetup';
@@ -61,6 +62,7 @@ export default () => {
             deviceSelect={<DeviceSelector />}
             sidePanel={<SidePanel />}
             panes={[
+                { name: 'Sensor', Main: BLESensors },
                 { name: 'Connection Map', Main: DeviceDetails },
                 { name: 'Server Setup', Main: ServerSetup },
             ]}

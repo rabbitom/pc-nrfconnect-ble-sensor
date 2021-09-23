@@ -1,13 +1,13 @@
 {
-  "name": "pc-nrfconnect-ble",
+  "name": "pc-nrfconnect-ble-sensor",
   "version": "2.5.3",
-  "description": "A natural first choice for Bluetooth Low Energy development",
-  "displayName": "Bluetooth Low Energy",
+  "description": "Connect to sensor device via ble and read data.",
+  "displayName": "BLE Sensor",
   "repository": {
     "type": "git",
     "url": "https://github.com/NordicSemiconductor/pc-nrfconnect-ble.git"
   },
-  "author": "Nordic Semiconductor ASA",
+  "author": "Tom Hao",
   "license": "SEE LICENSE IN LICENSE",
   "main": "dist/bundle.js",
   "engines": {
