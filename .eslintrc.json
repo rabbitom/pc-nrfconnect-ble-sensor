@@ -65,7 +65,7 @@
         "prettier/prettier": "off",
         "import/order": "off",
         "simple-import-sort/imports": [
-            "error",
+            "off",
             {
                 /* This configures the order of the imports.
                    The obscure format using regexps is described at
