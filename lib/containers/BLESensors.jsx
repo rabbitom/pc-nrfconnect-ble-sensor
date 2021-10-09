@@ -4,7 +4,10 @@ import React from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import BLESensorList from '../components/BLESensorList';
-import Breadcrumb from 'react-bootstrap/Breadcrumb'
+import BLESensorData from '../components/BLESensorData';
+import Breadcrumb from 'react-bootstrap/Breadcrumb';
+// mock
+import { Map } from 'immutable';
 
 const defaultDeviceDefinition = require('../../NordicThingy52.json');
 
@@ -26,32 +29,57 @@ class BLESensors extends React.PureComponent {
         this.state = {
             view: 'devices'
         };
+        this.handleSelectSensor = this.handleSelectSensor.bind(this);
+    }
+
+    nav(view) {
+        this.setState({
+            view
+        })
+    }
+
+    handleSelectDevice(device) {
+        this.setState({
+            view: 'device',
+            currentDevice: device
+        })
+    }
+
+    handleSelectSensor(sensor) {
+        this.setState({
+            view: 'sensor',
+            currentSensor: sensor
+        })
     }
 
     render() {
         const { connectedDevices } = this.props;
         const sensors = getSensorList(defaultDeviceDefinition);
-        const { view } = this.state;
+        const { view, currentDevice, currentSensor } = this.state;
         const navs = [{
+            view: 'devices',
             title: 'Devices'
         }]
         if(view !== 'devices') {
             navs.push({
-                title: 'Some Device'
+                view: 'device',
+                title: currentDevice.name
             })
             if(view !== 'device')
                 navs.push({
-                    title: 'Some Sensor'
+                    view: 'sensor',
+                    title: currentSensor.name
                 })
         }
         navs[navs.length - 1].active = true;
         return (
             <div>
                 <Breadcrumb>
-                    {navs.map(({title,active}) => <Breadcrumb.Item active={active || false}>{title}</Breadcrumb.Item>)}
+                    {navs.map(({view:key,title,active}) => <Breadcrumb.Item active={active || false} onClick={e => this.nav(key,e)}>{title}</Breadcrumb.Item>)}
                 </Breadcrumb>
-                {connectedDevices && connectedDevices.size > 0 ? connectedDevices.map(device => <div>{device.name ? device.name : '<Unknown>'}</div>) : 'no device connected'}
-                <BLESensorList sensors={sensors}/>
+                { view === 'devices' && (connectedDevices && connectedDevices.size > 0 ? connectedDevices.map(device => <div className="ble-sensor-device-list-item" onClick={e => this.handleSelectDevice(device,e)}>{device.name ? device.name : '<Unknown>'}</div>) : 'no device connected') }
+                { view === 'device' && <BLESensorList device={currentDevice} sensors={sensors} onSelectSensor={this.handleSelectSensor}/> }
+                { view === 'sensor' && <BLESensorData device={currentDevice} sensor={currentSensor}/> }
             </div>
         );
     }
@@ -63,7 +91,12 @@ function mapStateToProps(state) {
     const { selectedAdapter } = adapter;
 
     if (!selectedAdapter) {
-        return {};
+        return {
+            // mock
+            connectedDevices: Map().set('device-id', {
+                name: 'device name'
+            })
+        };
     }
 
     return {
