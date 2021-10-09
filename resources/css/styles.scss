@@ -1600,5 +1600,15 @@ hr {
 }
 
 .ble-sensor-item {
-    cursor: pointer;
+    background-color: white;
+    padding: 0.5rem;
+    margin-bottom: 0.25rem;
+    display: flex;
+    flex-direction: row;
+    .ble-sensor-name {
+        width: 10rem;
+    }
+    .ble-sensor-value {
+        flex: 1;
+    }
 }
