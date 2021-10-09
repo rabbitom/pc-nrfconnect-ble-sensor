@@ -2,10 +2,13 @@
 
 import React from 'react';
 import { connect } from 'react-redux';
+import { bindActionCreators } from 'redux';
 import PropTypes from 'prop-types';
+import Breadcrumb from 'react-bootstrap/Breadcrumb';
+import * as AdapterActions from '../actions/adapterActions';
+import BLESensorDevice from '../components/BLESensorDevice';
 import BLESensorList from '../components/BLESensorList';
 import BLESensorData from '../components/BLESensorData';
-import Breadcrumb from 'react-bootstrap/Breadcrumb';
 // mock
 import { Map } from 'immutable';
 
@@ -29,6 +32,7 @@ class BLESensors extends React.PureComponent {
         this.state = {
             view: 'devices'
         };
+        this.handleSelectDevice = this.handleSelectDevice.bind(this);
         this.handleSelectSensor = this.handleSelectSensor.bind(this);
     }
 
@@ -53,7 +57,10 @@ class BLESensors extends React.PureComponent {
     }
 
     render() {
-        const { connectedDevices } = this.props;
+        const {
+            connectedDevices,
+            disconnectFromDevice,
+        } = this.props;
         const sensors = getSensorList(defaultDeviceDefinition);
         const { view, currentDevice, currentSensor } = this.state;
         const navs = [{
@@ -77,7 +84,7 @@ class BLESensors extends React.PureComponent {
                 <Breadcrumb>
                     {navs.map(({view:key,title,active}) => <Breadcrumb.Item active={active || false} onClick={e => this.nav(key,e)}>{title}</Breadcrumb.Item>)}
                 </Breadcrumb>
-                { view === 'devices' && (connectedDevices && connectedDevices.size > 0 ? connectedDevices.map(device => <div className="ble-sensor-device-list-item" onClick={e => this.handleSelectDevice(device,e)}>{device.name ? device.name : '<Unknown>'}</div>) : 'no device connected') }
+                { view === 'devices' && (connectedDevices && connectedDevices.size > 0 ? connectedDevices.toList().map(device => <BLESensorDevice device={device} onSelectDevice={this.handleSelectDevice} onDisconnectDevice={disconnectFromDevice}/>) : 'no device connected') }
                 { view === 'device' && <BLESensorList device={currentDevice} sensors={sensors} onSelectSensor={this.handleSelectSensor}/> }
                 { view === 'sensor' && <BLESensorData device={currentDevice} sensor={currentSensor}/> }
             </div>
@@ -94,6 +101,7 @@ function mapStateToProps(state) {
         return {
             // mock
             connectedDevices: Map().set('device-id', {
+                address: 'device:address',
                 name: 'device name'
             })
         };
@@ -104,10 +112,17 @@ function mapStateToProps(state) {
     };
 }
 
-export default connect(mapStateToProps)(BLESensors);
+function mapDispatchToProps(dispatch) {
+    return {
+        ...bindActionCreators(AdapterActions, dispatch),
+    }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(BLESensors);
 
 BLESensors.propTypes = {
     connectedDevices: PropTypes.object,
+    disconnectFromDevice: PropTypes.func,
 };
 
 BLESensors.defaultProps = {
