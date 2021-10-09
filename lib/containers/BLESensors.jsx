@@ -5,22 +5,28 @@ import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import PropTypes from 'prop-types';
 import Breadcrumb from 'react-bootstrap/Breadcrumb';
+import { logger } from 'nrfconnect/core';
 import * as AdapterActions from '../actions/adapterActions';
+import * as SensorActions from '../actions/sensorActions';
 import BLESensorDevice from '../components/BLESensorDevice';
 import BLESensorList from '../components/BLESensorList';
 import BLESensorData from '../components/BLESensorData';
 // mock
-import { Map } from 'immutable';
+import { Map, OrderedMap } from 'immutable';
 
 const defaultDeviceDefinition = require('../../NordicThingy52.json');
 
 function getSensorList(deviceDefinition) {
     const { services } = deviceDefinition;
     const sensors = [];
-    services.forEach(({characteristics}) => {
+    services.forEach(({uuid,characteristics}) => {
         characteristics.forEach(characteristic => {
             if(characteristic.function === 'feature')
-                sensors.push(characteristic);
+                sensors.push({
+                    ...characteristic,
+                    serviceUuid: uuid.replace(/-/g,''),
+                    characteristicUuid: characteristic.uuid.replace(/-/g,''),
+                });
         })
     });
     return sensors;
@@ -46,7 +52,29 @@ class BLESensors extends React.PureComponent {
         this.setState({
             view: 'device',
             currentDevice: device
-        })
+        });
+        logger.info('selected sensor device', device.instanceId);
+        const { sensors, devices, addSensor } = this.props;
+        const [ sensor ] = getSensorList(defaultDeviceDefinition);
+        sensor.id = `${device.instanceId}.sensor.${sensor.name}`;
+        logger.info('sensor id', sensor.id);
+        logger.info('sensor service', sensor.serviceUuid);
+        logger.info('sensor characteristic', sensor.characteristicUuid);
+        if(!sensors.has(sensor.id)) {
+            logger.info('looking for sensor characteristic');
+            const deviceWithDetails = devices.get(device.instanceId);
+            const service = deviceWithDetails.children.find(({uuid}) => uuid === sensor.serviceUuid)
+            logger.info('service', service ? 'found' : 'not exist');
+            if(service) {
+                //todo: discover characteristics 
+                const characteristic = service.children.find(({uuid}) => uuid === sensor.characteristicUuid);
+                logger.info('characteristic', characteristic ? 'found' : 'not exist');
+                if(characteristic) {
+                    sensor.characteristicId = characteristic.instanceId;
+                    addSensor(sensor);
+                }
+            }
+        }
     }
 
     handleSelectSensor(sensor) {
@@ -60,8 +88,8 @@ class BLESensors extends React.PureComponent {
         const {
             connectedDevices,
             disconnectFromDevice,
+            sensors,
         } = this.props;
-        const sensors = getSensorList(defaultDeviceDefinition);
         const { view, currentDevice, currentSensor } = this.state;
         const navs = [{
             view: 'devices',
@@ -93,7 +121,7 @@ class BLESensors extends React.PureComponent {
 }
 
 function mapStateToProps(state) {
-    const { adapter } = state.app;
+    const { adapter, sensor } = state.app;
 
     const { selectedAdapter } = adapter;
 
@@ -103,18 +131,23 @@ function mapStateToProps(state) {
             connectedDevices: Map().set('device-id', {
                 address: 'device:address',
                 name: 'device name'
-            })
+            }),
+            devices: OrderedMap(),
+            sensors: sensor.sensors,
         };
     }
 
     return {
         connectedDevices: selectedAdapter.connectedDevices,
+        devices: selectedAdapter.deviceDetails && selectedAdapter.deviceDetails.devices,
+        sensors: sensor.sensors,
     };
 }
 
 function mapDispatchToProps(dispatch) {
     return {
         ...bindActionCreators(AdapterActions, dispatch),
+        ...bindActionCreators(SensorActions, dispatch),
     }
 }
 
@@ -123,6 +156,9 @@ export default connect(mapStateToProps, mapDispatchToProps)(BLESensors);
 BLESensors.propTypes = {
     connectedDevices: PropTypes.object,
     disconnectFromDevice: PropTypes.func,
+    devices: PropTypes.object,
+    sensors: PropTypes.object,
+    addSensor: PropTypes.func,
 };
 
 BLESensors.defaultProps = {
