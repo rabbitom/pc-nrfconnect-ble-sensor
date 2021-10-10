@@ -5,10 +5,10 @@ import PropTypes from 'prop-types';
 import Button from 'react-bootstrap/Button';
 
 const BLESensorList = ({
-    device,
     sensors,
     onReadSensorValue,
-    onSelectSensor
+    onSwitchSensor,
+    onSelectSensor,
 }) => {
     return (
         <div className="ble-sensor-list">
@@ -17,10 +17,12 @@ const BLESensorList = ({
                     <div className="ble-sensor-name">{sensor.name}</div>
                     <div className="ble-sensor-value">
                         {sensor.value}
+                        &nbsp;
                         {sensor.unit}
                     </div>
-                    <Button onClick={e => onReadSensorValue(device,sensor,e)}>Refresh</Button>&nbsp;
-                    <Button onClick={e => onSelectSensor(sensor,e)} variant="secondary">Chart</Button>
+                    {sensor.characteristic && sensor.characteristic.properties.read && <Button className="ble-sensor-action" onClick={e => onReadSensorValue(sensor,e)}>Refresh</Button>}
+                    {sensor.characteristic && sensor.characteristic.properties.notify && <Button className="ble-sensor-action" onClick={e => onSwitchSensor(sensor,!sensor.isOn,e)}><i className={sensor.isOn ? 'mdi mdi-stop' : 'mdi mdi-play'}/></Button>}
+                    <Button className="ble-sensor-action" onClick={e => onSelectSensor(sensor,e)} variant="secondary">Chart</Button>
                 </div>
             )}
         </div>
@@ -28,10 +30,10 @@ const BLESensorList = ({
 }
 
 BLESensorList.propTypes = {
-    device: PropTypes.object.isRequired,
     sensors: PropTypes.object.isRequired,
     onReadSensorValue: PropTypes.func,
-    onSelectSensor: PropTypes.func
+    onSwitchSensor: PropTypes.func,
+    onSelectSensor: PropTypes.func,
 }
 
 export default BLESensorList;

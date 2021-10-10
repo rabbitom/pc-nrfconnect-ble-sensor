@@ -50,6 +50,8 @@ class BLESensors extends React.PureComponent {
             connectedDevices,
             disconnectFromDevice,
             sensors,
+            readSensorValue,
+            switchSensor,
         } = this.props;
         const { view, currentDevice, currentSensor } = this.state;
         const navs = [{
@@ -74,7 +76,7 @@ class BLESensors extends React.PureComponent {
                     {navs.map(({view:key,title,active}) => <Breadcrumb.Item active={active || false} onClick={e => this.nav(key,e)}>{title}</Breadcrumb.Item>)}
                 </Breadcrumb>
                 { view === 'devices' && (connectedDevices && connectedDevices.size > 0 ? connectedDevices.toList().map(device => <BLESensorDevice device={device} onSelectDevice={this.handleSelectDevice} onDisconnectDevice={disconnectFromDevice}/>) : 'no device connected') }
-                { view === 'device' && <BLESensorList device={currentDevice} sensors={sensors.toList()} onSelectSensor={this.handleSelectSensor}/> }
+                { view === 'device' && <BLESensorList sensors={sensors.toList()} onSelectSensor={this.handleSelectSensor} onReadSensorValue={readSensorValue} onSwitchSensor={switchSensor}/> }
                 { view === 'sensor' && <BLESensorData device={currentDevice} sensor={currentSensor}/> }
             </div>
         );
@@ -94,9 +96,16 @@ function mapStateToProps(state) {
                 name: 'device name'
             }),
             sensors: OrderedMap().set('sensor-id', {
+                id: 'sensor-id',
                 name: 'sensor name',
                 unit: 'unit',
-                value: 'value'
+                value: 'value',
+                isOn: false,
+                characteristic: {
+                    properties: {
+                        notify: true
+                    }
+                }
             })
         };
     }
@@ -121,6 +130,8 @@ BLESensors.propTypes = {
     disconnectFromDevice: PropTypes.func,
     sensors: PropTypes.object,
     getDeviceSensors: PropTypes.func,
+    readSensorValue: PropTypes.func,
+    switchSensor: PropTypes.func,
 };
 
 BLESensors.defaultProps = {
